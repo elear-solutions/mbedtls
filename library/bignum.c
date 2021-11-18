@@ -1971,9 +1971,15 @@ cleanup:
 /*
  * Sliding-window exponentiation: X = A^E mod N  (HAC 14.85)
  */
+#if !defined(MBEDTLS_MPI_EXP_MOD_ALT_FALLBACK)
 int mbedtls_mpi_exp_mod( mbedtls_mpi *X, const mbedtls_mpi *A,
+                          const mbedtls_mpi *E, const mbedtls_mpi *N,
+                          mbedtls_mpi *prec_RR )
+#else
+int mbedtls_mpi_exp_mod_soft( mbedtls_mpi *X, const mbedtls_mpi *A,
                          const mbedtls_mpi *E, const mbedtls_mpi *N,
                          mbedtls_mpi *prec_RR )
+#endif
 {
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     size_t wbits, wsize, one = 1;
