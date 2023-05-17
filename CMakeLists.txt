@@ -73,7 +73,8 @@ endif()
 
 # The following file GLOB command will search for all files within the current
 # directory that match the specified expressions (*.c and *.h), and assign the
-# resulting files to the variable SRCS. SRCS is a list of all C source and
+# resulting files to the variable LIB_FILE and INCLUDE_MBEDTLS_HDRS. LIB_FILE 
+# is a list of all C source and INCLUDE_MBEDTLS_HDRS is a list of all
 # header files in the current directory.
 
 file(GLOB INCLUDE_MBEDTLS_HDRS include/mbedtls/*.h)
@@ -97,7 +98,6 @@ target_link_libraries(mbedtls Threads::Threads)
 # Install library and header files
 install (TARGETS mbedtls DESTINATION lib)
 install (TARGETS mbedtls_static DESTINATION lib)
-# todo: don't include *.c files in include
 install (FILES ${INCLUDE_MBEDTLS_HDRS} DESTINATION include/mbedtls)
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
