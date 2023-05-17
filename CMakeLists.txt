@@ -76,21 +76,17 @@ endif()
 # resulting files to the variable SRCS. SRCS is a list of all C source and
 # header files in the current directory.
 
-file(GLOB CONFIG configs/*.c configs/*.h)
-file(GLOB INCLUDE_MBEDTLS include/mbedtls/*.c include/mbedtls/*.h)
-file(GLOB INCLUDE_PSA include/psa/*.c include/psa/*.h)
-file(GLOB LIB_FILE library/*.c library/*.h)
+file(GLOB INCLUDE_MBEDTLS_HDRS include/mbedtls/*.h)
+file(GLOB LIB_FILE library/*.c)
 
 include_directories(${PROJECT_SOURCE_DIR}/)
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 include_directories(${PROJECT_SOURCE_DIR}/include/mbedtls/)
 include_directories(${PROJECT_SOURCE_DIR}/library/)
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/everest/include/)
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/everest/include/everest/)
 
 # Specify the libraries to be linked dynamically without conan
-add_library(mbedtls SHARED ${CONFIG} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${LIB_FILE})
-add_library(mbedtls_static STATIC ${CONFIG} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${LIB_FILE})
+add_library(mbedtls SHARED ${LIB_FILE})
+add_library(mbedtls_static STATIC ${LIB_FILE})
 
 find_package(Threads REQUIRED)
 
@@ -102,7 +98,7 @@ target_link_libraries(mbedtls Threads::Threads)
 install (TARGETS mbedtls DESTINATION lib)
 install (TARGETS mbedtls_static DESTINATION lib)
 # todo: don't include *.c files in include
-install (FILES ${INCLUDE_MBEDTLS} DESTINATION include/mbedtls)
+install (FILES ${INCLUDE_MBEDTLS_HDRS} DESTINATION include/mbedtls)
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
 
