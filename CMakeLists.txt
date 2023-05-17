@@ -35,10 +35,6 @@ project(mbedtls)
 if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
   include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
   conan_basic_setup()
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/obj)
-  execute_process (COMMAND ar x ${CONAN_LIB_DIRS_JSON-C}/libjson-c.a
-                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/obj)
-  file(GLOB JSON-C-OBJS ${CMAKE_BINARY_DIR}/obj/*.o)
 endif()
 
 # Set default platform to linux if none was specified
@@ -60,7 +56,8 @@ message(WARNING "Build type is set to: " ${CMAKE_BUILD_TYPE})
 # CMAKE_BUILD_TYPE implicitly adds the following options:
 #     Release: -O3 -DNDEBUG
 #     Debug: -g
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic-errors -Wall -D_GNU_SOURCE -Os")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic-errors -Wall -D_GNU_SOURCE -Os -fPIC")
+
 if(NOT ${Platform} STREQUAL "Linux")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wgnu-zero-variadic-macro-arguments")
 endif()
@@ -79,74 +76,33 @@ endif()
 # resulting files to the variable SRCS. SRCS is a list of all C source and
 # header files in the current directory.
 
-file(GLOB CONFIG ./configs/*.c ./configs/*.h)
-file(GLOB INCLUDE_MBEDTLS ./include/mbedtls/*.c ./include/mbedtls/*.h)
-file(GLOB INCLUDE_PSA ./include/psa/*.c ./include/psa/*.h)
-file(GLOB LIB_FILE ./library/*.c ./library/*.h)
-file(GLOB HDRS ./*.h)
+file(GLOB CONFIG configs/*.c configs/*.h)
+file(GLOB INCLUDE_MBEDTLS include/mbedtls/*.c include/mbedtls/*.h)
+file(GLOB INCLUDE_PSA include/psa/*.c include/psa/*.h)
+file(GLOB LIB_FILE library/*.c library/*.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/)
 include_directories(${PROJECT_SOURCE_DIR}/include/)
-include_directories(${PROJECT_SOURCE_DIR}/include/mbedtls)
+include_directories(${PROJECT_SOURCE_DIR}/include/mbedtls/)
 include_directories(${PROJECT_SOURCE_DIR}/library/)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/everest/include/)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/everest/include/everest/)
 
+# Specify the libraries to be linked dynamically without conan
+add_library(mbedtls SHARED ${CONFIG} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${LIB_FILE})
+add_library(mbedtls_static STATIC ${CONFIG} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${LIB_FILE})
 
-# Setup libmbedtls specific macros: logger
-#     LOG_COLOR: print logs in color on terminal
-if (${COLOR})
-  add_definitions(-DLOG_COLOR )
-  message( WARNING "Using logging with color" )
-else()
-  message( WARNING "Using logging without color, set -DCOLOR=1 to enable color" )
-endif()
-
-# Setup libelearcommon specific macros: allocate
-# In Release mode skip TTL checks
-#     ELEAR_MEM_MANAGEMENT: checks TTL for dynamically allocated memory
-#     DEFAULT_MEM_MANAGEMENT: skips TTL checks for dynamically allocated memory
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  add_definitions(-DDEFAULT_MEM_MANAGEMENT)
-  message( WARNING "In Release mode: Using DEFAULT_MEM_MANAGEMENT in allocate.c" )
-else()
-  add_definitions(-DELEAR_MEM_MANAGEMENT)
-  message( WARNING "In Debug mode: Using ELEAR_MEM_MANAGEMENT in allocate.c" )
-endif()
-
-# setup compilation for pthreads
-set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Squash in libjson-c if using conan
-if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-  add_library(mbedtls_static STATIC ${CONFIG} ${DOXYGEN} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${INCLUDE}
-                                    ${LIB_FILE} )
-
-  add_library(mbedtls SHARED ${CONFIG} ${DOXYGEN} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${INCLUDE}
-                             ${LIB_FILE} )
-                             
-  else()
-  # Specify the libraries to be linked dynamically without conan
-  add_library(mbedtls_static STATIC ${CONFIG} ${DOXYGEN} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${INCLUDE}
-                                    ${LIB_FILE} )
- 
-  add_library(medtls SHARED ${CONFIG} ${DOXYGEN} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${INCLUDE}
-                            ${LIB_FILE} )
-  
-  target_link_libraries(mbedtls json-c)
-endif()
-# prepare elearcommon_static to be squashed into dynamic libraries
-set_target_properties(mbedtls_static PROPERTIES COMPILE_FLAGS "-fPIC")
-
 # Specify the libraries to be linked dynamically
- target_link_libraries(mbedtls m)
- target_link_libraries(mbedtls Threads::Threads)
+target_link_libraries(mbedtls m)
+target_link_libraries(mbedtls Threads::Threads)
 
 # Install library and header files
- install (TARGETS mbedtls DESTINATION lib)
- install (TARGETS mbedtls_static DESTINATION lib)
- install (FILES ${HDRS} ${CONFIG} ${INCLUDE_MBEDTLS} ${INCLUDE_PSA} ${LIB_FILE} DESTINATION include/mbedtls)
+install (TARGETS mbedtls DESTINATION lib)
+install (TARGETS mbedtls_static DESTINATION lib)
+# todo: don't include *.c files in include
+install (FILES ${INCLUDE_MBEDTLS} DESTINATION include/mbedtls)
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
 

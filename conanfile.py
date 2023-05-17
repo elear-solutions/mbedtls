@@ -11,10 +11,9 @@ class ElearcommonlibConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [ True, False ],
-        "color": [ True, False ],
         "cmake_build_type": [ "Debug", "Release" ]
     }
-    default_options = { "shared": False , "color": False, "cmake_build_type": "Release" }
+    default_options = { "shared": False , "cmake_build_type": "Release" }
     generators = "cmake"
     default_user = "jenkins"
     default_channel = "master"
@@ -27,7 +26,6 @@ class ElearcommonlibConan(ConanFile):
     def build(self):
         cmake = CMake(self)
         cmake.definitions["Platform"] = self.settings.os
-        cmake.definitions["COLOR"] = self.options.color
         cmake.definitions["CMAKE_BUILD_TYPE"] = self.options.cmake_build_type
         cmake.configure(source_folder=".")
         cmake.build()
